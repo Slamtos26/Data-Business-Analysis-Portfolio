@@ -1,0 +1,111 @@
+FoodYum Product Data Analysis - SQL Queries
+Task 1: Identify and replace missing values
+Query: Determine how many products have the 'year_added' value missing.
+
+Solution:
+SELECT
+    COUNT(*) AS missing_year
+FROM
+    products
+WHERE
+    year_added IS NULL;
+
+Description: This query identifies how many products have missing 'year_added' values by counting the number of records where the 'year_added' column is NULL.
+
+
+
+Task 2: Clean and replace missing values
+Query: Ensure the product data matches the specified criteria for cleaning missing and invalid values.
+
+Solution:
+ITH ranked_weights AS (
+SELECT
+weight,
+ROW_NUMBER() OVER (ORDER BY weight::NUMERIC) AS rn,
+COUNT(*) OVER() AS cnt
+FROM
+products
+WHERE
+weight ~ E'^\\d+\\.?\\d*\\s*grams$' OR
+weight ~ E'^\\d+\\.?\\d*$'
+),
+median_weight AS (
+SELECT ROUND(AVG(weight::NUMERIC)::NUMERIC, 2) AS median_value
+FROM (
+SELECT weight
+FROM ranked_weights
+WHERE rn IN ((cnt + 1) / 2, (cnt + 2) / 2)
+) AS sub
+),
+ranked_prices AS (
+SELECT
+price,
+ROW_NUMBER() OVER (ORDER BY price::NUMERIC) AS rn,
+COUNT(*) OVER() AS cnt
+FROM
+products
+WHERE
+price IS NOT NULL
+),
+median_price AS (
+SELECT ROUND(AVG(price::NUMERIC)::NUMERIC, 2) AS median_value
+FROM (
+SELECT price
+FROM ranked_prices
+WHERE rn IN ((cnt + 1) / 2, (cnt + 2) / 2)
+) AS sub
+)
+SELECT
+product_id,
+COALESCE(NULLIF(product_type, ''), 'Unknown') AS product_type,
+COALESCE(NULLIF(brand, '-'), 'Unknown') AS brand,
+ROUND(
+COALESCE(
+CASE
+WHEN weight ~ E'^\\d+\\.?\\d*\\s*grams$' THEN CAST(REPLACE(weight, ' grams', '') AS NUMERIC)
+WHEN weight ~ E'^\\d+\\.?\\d*$' THEN CAST(weight AS NUMERIC)
+END,
+(SELECT median_value FROM median_weight LIMIT 1)
+)::NUMERIC, 2
+) AS weight,
+ROUND(
+COALESCE(price::NUMERIC, (SELECT median_value FROM median_price LIMIT 1))::NUMERIC, 2
+) AS price,
+COALESCE(average_units_sold::INTEGER, 0) AS average_units_sold,
+COALESCE(year_added::INTEGER, 2022) AS year_added,
+COALESCE(NULLIF(UPPER(stock_location), ''), 'Unknown') AS stock_location
+FROM
+products;
+
+Description: This query cleans the data by replacing missing or invalid values in the columns. It handles the 'product_type', 'brand', 'weight', 'price', 'average_units_sold', 'year_added', and 'stock_location' columns. The 'weight' and 'price' values are replaced with their respective median values calculated from the dataset.
+
+
+Task 3: Aggregate numeric and categorical variables
+Query: Find the minimum and maximum price for each product type.
+
+Solution:
+SELECT
+    product_type,
+    MIN(price) AS min_price,
+    MAX(price) AS max_price
+FROM
+    products
+GROUP BY
+    product_type;
+
+Description: This query aggregates the data by 'product_type' and calculates the minimum and maximum prices for each category. It helps in analyzing the price range within each product category.
+Task 4: Extract data based on specific conditions
+Query: Extract data for meat and dairy products with an average unit sold greater than 10.
+
+Solution:
+SELECT
+    product_id,
+    price,
+    average_units_sold
+FROM
+    products
+WHERE
+    product_type IN ('Meat', 'Dairy')
+    AND average_units_sold > 10;
+
+Description: This query filters out meat and dairy products where the average units sold per month are greater than 10. It helps in identifying high-demand products within these categories.
