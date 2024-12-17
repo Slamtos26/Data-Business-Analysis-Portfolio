@@ -1,0 +1,120 @@
+### README - Exploratory Data Analysis on Netflix Movies (1990s)
+
+#### **Project Overview**
+This project performs exploratory data analysis (EDA) on a Netflix dataset to explore movies released in the 1990s decade. The goals of the analysis are:
+1. Determine the **most frequent movie duration** in the 1990s.
+2. Count the number of **short action movies** (duration < 90 minutes) released during that time.
+
+The analysis uses Python libraries **pandas** for data manipulation and **matplotlib** for data visualization.
+
+#### **Dataset**
+- File: `netflix_data.csv`
+- **Columns**:
+  - `show_id`: Unique identifier for the show.
+  - `type`: Type of content (e.g., Movie or TV Show).
+  - `title`: Title of the content.
+  - `director`: Director(s) of the content.
+  - `cast`: Cast members.
+  - `country`: Country of origin.
+  - `date_added`: Date the show was added to Netflix.
+  - `release_year`: Year of release.
+  - `duration`: Duration of the content in minutes.
+  - `description`: Description or summary of the content.
+  - `genre`: Genre of the content (e.g., Action, Comedy).
+
+#### **Steps in the Analysis**
+1. Load and inspect the dataset.
+2. Filter the dataset to include only movies released between **1990 and 1999**.
+3. Clean and preprocess the `duration` column to make it numeric.
+4. Find the **most frequent movie duration**.
+5. Filter short action movies (duration < 90 minutes) and count them.
+6. Visualize the distribution of movie durations in the 1990s using a histogram.
+
+---
+
+#### **Python Code**
+
+```python
+# Importing pandas and matplotlib
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Step 1: Read in the Netflix CSV as a DataFrame
+netflix_df = pd.read_csv("netflix_data.csv")
+
+# Step 2: Filter movies released in the 1990s
+movies_1990s = netflix_df[
+    (netflix_df['type'] == 'Movie') & 
+    (netflix_df['release_year'] >= 1990) & 
+    (netflix_df['release_year'] <= 1999)
+]
+
+# Step 3: Clean and preprocess 'duration' column
+# Drop rows where duration is missing
+movies_1990s = movies_1990s.dropna(subset=['duration'])
+
+# Convert 'duration' column to a string, clean it, and convert to integer
+movies_1990s['duration'] = movies_1990s['duration'].astype(str).str.replace(' min', '')
+movies_1990s['duration'] = movies_1990s['duration'].astype(int)
+
+# Step 4: Find the most frequent movie duration
+duration_counts = movies_1990s['duration'].value_counts()
+most_frequent_duration = duration_counts.idxmax()
+print("Most frequent movie duration in the 1990s:", most_frequent_duration)
+
+# Save the result as 'duration'
+duration = most_frequent_duration
+
+# Step 5: Count short action movies (< 90 minutes)
+short_action_movies = movies_1990s[
+    (movies_1990s['duration'] < 90) & 
+    (movies_1990s['genre'] == 'Action')
+]
+short_movie_count = short_action_movies.shape[0]
+
+print("Number of short action movies in the 1990s:", short_movie_count)
+
+# Step 6: Visualize the distribution of movie durations
+plt.figure(figsize=(10, 6))
+plt.hist(movies_1990s['duration'], bins=20, color='skyblue', edgecolor='black')
+plt.title("Distribution of Movie Durations in the 1990s")
+plt.xlabel("Duration (minutes)")
+plt.ylabel("Frequency")
+plt.show()
+```
+
+---
+
+#### **Key Results**
+1. **Most Frequent Movie Duration**: The duration (in minutes) that appears most frequently in movies released during the 1990s.
+2. **Number of Short Action Movies**: Count of action movies with a duration of less than 90 minutes.
+
+---
+
+#### **Requirements**
+To run this project, you need:
+- Python 3.x
+- Libraries:
+  - `pandas` for data manipulation
+  - `matplotlib` for visualization
+
+Install the required libraries using:
+```bash
+pip install pandas matplotlib
+```
+
+---
+
+#### **How to Run**
+1. Place the dataset file `netflix_data.csv` in the working directory.
+2. Run the Python script in a Python IDE, Jupyter Notebook, or terminal.
+3. View the printed results and histogram plot to understand the findings.
+
+---
+
+#### **Output**
+- The most frequent movie duration in the 1990s (e.g., 90 minutes).
+- The number of short action movies (< 90 minutes).
+- A histogram showing the distribution of movie durations for 1990s movies.
+
+
